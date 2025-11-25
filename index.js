@@ -1,7 +1,7 @@
 require('dotenv').config();
-const logger = require('./logger');
-const { getApplicationDevices } = require('./tektelic');
-const { provisionAbpDevice } = require('./tts');
+const logger = require('./lib/logger');
+const { getApplicationDevices } = require('./lib/tektelic');
+const { provisionAbpDevice } = require('./lib/tts');
 
 const {
 	TEKTELIC_APP_ID,
@@ -31,6 +31,12 @@ const checkMigrationInfo = (device) => {
 	}
 	if (!device.nwkSKey) {
 		missingFields.push('nwkSKey');
+	}
+	if (!device.appEUI) {
+		missingFields.push('appEUI');
+	}
+	if (!device.appKey) {
+		missingFields.push('appKey');
 	}
 	return missingFields;
 }
@@ -70,6 +76,8 @@ const getDevicesToMigrate = (devices) => {
 				devAddress: device.devAddress,
 				appSKey: device.appSKey,
 				nwkSKey: device.nwkSKey,
+				appEUI: device.appEUI,
+				appKey: device.appKey,
 			});
 		}
 	}
