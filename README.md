@@ -192,6 +192,53 @@ The project uses `pino` for logging with a readable format. Logs include:
 - Verify that `TTS_BEARER_TOKEN` is valid and has write permissions
 - Confirm that `TTS_APP_ID` exists in your TTS instance
 
+## Device Comparison
+
+To generate a comparison report between Tektelic and Gridia devices, you need two CSV files:
+
+### 1. Generate `gridia_devices.csv`
+
+Run the following query against the Gridia database and export the result as `gridia_devices.csv` in the project root:
+
+```sql
+select
+  d.id,
+  d.amazonId,
+  deviceId,
+  p.name as project,
+  o.name as organization
+from device d
+join `project` p on d.projectId = p.id
+join organization o on p.organizationId = o.id;
+```
+
+### 2. Generate `tektelic_devices.csv`
+
+Run the following script to fetch all devices from the Tektelic API:
+
+```bash
+node tektelic_devices.js
+```
+
+### 3. Run the comparison
+
+```bash
+node compare_devices.js
+```
+
+This generates `devices_comparison.csv` with the following columns:
+
+| Column | Source |
+|---|---|
+| `tektelicDevName` | Tektelic `deviceName` |
+| `tektelicDevEUI` | Tektelic `deviceEUI` |
+| `gridiaDevEUI` | Gridia `amazonId` |
+| `gridiaDevId` | Gridia `deviceId` |
+| `gridiaProject` | Gridia `project` |
+| `gridiaOrganization` | Gridia `organization` |
+
+Devices that only exist in one platform will have the other platform's columns empty.
+
 ## License
 
 ISC
