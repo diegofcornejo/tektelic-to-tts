@@ -13,6 +13,7 @@ const getDevicesToList = (devices) => {
 	for (const device of devices) {
 		logger.info(`Device ${device.deviceEUI} is ready to be listed`);
 		devicesToList.push({
+			deviceId: device.id.id,
 			deviceName: device.name,
 			deviceEUI: device.deviceEUI
 		});
@@ -33,8 +34,8 @@ const main = async () => {
 	const devicesToList = getDevicesToList(devices);
 
 	if (devicesToList.length > 0) {
-		const header = 'deviceName,deviceEUI';
-		const rows = devicesToList.map(d => `${d.deviceName},${d.deviceEUI}`);
+		const header = 'deviceId,deviceName,deviceEUI';
+		const rows = devicesToList.map(d => `${d.deviceId},${d.deviceName},${d.deviceEUI}`);
 		const csv = [header, ...rows].join('\n');
 
 		fs.writeFileSync('tektelic_devices.csv', csv);

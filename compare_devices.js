@@ -38,6 +38,7 @@ const main = () => {
 		const gridiaDevice = gridiaByEUI.get(eui);
 
 		report.push({
+			tektelicDevId: tekDevice.deviceId,
 			tektelicDevName: tekDevice.deviceName,
 			tektelicDevEUI: tekDevice.deviceEUI,
 			gridiaDevEUI: gridiaDevice?.amazonId || '',
@@ -52,6 +53,7 @@ const main = () => {
 	for (const gridiaDevice of gridiaDevices) {
 		if (!tektelicEUIs.has(gridiaDevice.amazonId.toUpperCase())) {
 			report.push({
+				tektelicDevId: '',
 				tektelicDevName: '',
 				tektelicDevEUI: '',
 				gridiaDevEUI: gridiaDevice.amazonId,
@@ -62,9 +64,9 @@ const main = () => {
 		}
 	}
 
-	const header = 'tektelicDevName,tektelicDevEUI,gridiaDevEUI,gridiaDevId,gridiaProject,gridiaOrganization';
+	const header = 'tektelicDevId,tektelicDevName,tektelicDevEUI,gridiaDevId,gridiaDevEUI,gridiaProject,gridiaOrganization';
 	const rows = report.map(r =>
-		`${r.tektelicDevName},${r.tektelicDevEUI},${r.gridiaDevEUI},${r.gridiaDevId},${r.gridiaProject},${r.gridiaOrganization}`
+		`${r.tektelicDevId},${r.tektelicDevName},${r.tektelicDevEUI},${r.gridiaDevId},${r.gridiaDevEUI},${r.gridiaProject},${r.gridiaOrganization}`
 	);
 	const csv = [header, ...rows].join('\n');
 
