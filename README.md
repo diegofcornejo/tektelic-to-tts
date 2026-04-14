@@ -239,6 +239,33 @@ This generates `devices_comparison.csv` with the following columns:
 
 Devices that only exist in one platform will have the other platform's columns empty.
 
+## Delete Tektelic Devices
+
+To bulk-delete devices from the Tektelic platform, use the `delete_devices.js` script.
+
+### Input
+
+The script reads `tektelic_delete_devices.csv` from the project root. The required column is:
+
+| Column | Description |
+|---|---|
+| `tektelicDeviceId` | Tektelic internal device ID (UUID) used to identify the device to delete |
+
+Example CSV:
+
+```csv
+tektelicDeviceId,tektelicDevName,tektelicDevEUI
+d82efa50-ae1f-11ed-9dc8-6f708dbf6c1a,1595252,42594C0B01595252
+```
+
+### Run
+
+```bash
+node delete_devices.js
+```
+
+The script logs progress every 50 devices and a final summary with deleted/failed counts.
+
 ## License
 
 ISC
