@@ -16,8 +16,8 @@ The script automates the migration of LoRaWAN devices from Tektelic to TTS, perf
 ## Migration Flow
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/runbook-migracion-dark.png" />
-  <img src="docs/diagrams/runbook-migracion-light.png" alt="Migration runbook: inventory, migration via index.js (IS → NS → AS) and Tektelic cleanup" />
+  <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/migration-runbook-dark.png" />
+  <img src="docs/diagrams/migration-runbook-light.png" alt="Migration runbook: inventory, migration via index.js (IS → NS → AS) and Tektelic cleanup" />
 </picture>
 
 ## Prerequisites
