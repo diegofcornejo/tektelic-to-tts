@@ -13,6 +13,13 @@ The script automates the migration of LoRaWAN devices from Tektelic to TTS, perf
    - **NS (Network Server)**: Network and session configuration
    - **AS (Application Server)**: Application and key configuration
 
+## Migration Flow
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/runbook-migracion-dark.png" />
+  <img src="docs/diagrams/runbook-migracion-light.png" alt="Migration runbook: inventory, migration via index.js (IS → NS → AS) and Tektelic cleanup" />
+</picture>
+
 ## Prerequisites
 
 - Node.js (version 20 or higher)
