@@ -1,16 +1,12 @@
 const axios = require('axios');
-const logger = require('./logger');
-
-const {
-	TEKTELIC_BASE_URL,
-	TEKTELIC_BEARER_TOKEN,
-} = process.env;
+const config = require('../config');
+const logger = require('../lib/logger');
 
 const api = axios.create({
-	baseURL: TEKTELIC_BASE_URL,
+	baseURL: config.tektelic.baseUrl,
 	headers: {
 		'Accept': '*/*',
-		'X-Authorization': `Bearer ${TEKTELIC_BEARER_TOKEN}`,
+		'X-Authorization': `Bearer ${config.tektelic.bearerToken}`,
 	},
 });
 

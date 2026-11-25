@@ -1,11 +1,9 @@
-require('dotenv').config();
-const fs = require('fs');
-const logger = require('./lib/logger');
-const { getCustomerDevices, getCustomerApplications } = require('./lib/tektelic');
+const config = require('../config');
+const logger = require('../lib/logger');
+const { writeCsv } = require('../lib/csv');
+const { getCustomerDevices } = require('../clients/tektelic');
 
-const {
-	TEKTELIC_CUSTOMER_ID,
-} = process.env;
+const TEKTELIC_CUSTOMER_ID = config.tektelic.customerId;
 
 
 const getDevicesToList = (devices) => {
@@ -34,12 +32,8 @@ const main = async () => {
 	const devicesToList = getDevicesToList(devices);
 
 	if (devicesToList.length > 0) {
-		const header = 'deviceId,deviceName,deviceEUI';
-		const rows = devicesToList.map(d => `${d.deviceId},${d.deviceName},${d.deviceEUI}`);
-		const csv = [header, ...rows].join('\n');
-
-		fs.writeFileSync('tektelic_devices.csv', csv);
-		logger.info(`Saved ${devicesToList.length} devices to tektelic_devices.csv`);
+		writeCsv(config.paths.tektelicDevicesCsv, ['deviceId', 'deviceName', 'deviceEUI'], devicesToList);
+		logger.info(`Saved ${devicesToList.length} devices to ${config.paths.tektelicDevicesCsv}`);
 	} else {
 		logger.warn(`No devices to be listed for customer ${TEKTELIC_CUSTOMER_ID}`);
 	}

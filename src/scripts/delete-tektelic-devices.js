@@ -1,10 +1,10 @@
-require('dotenv').config();
 const fs = require('fs');
-const logger = require('./lib/logger');
-const { deleteDevice } = require('./lib/tektelic');
+const config = require('../config');
+const logger = require('../lib/logger');
+const { deleteDevice } = require('../clients/tektelic');
 
 const main = async () => {
-	const csv = fs.readFileSync('tektelic_delete_devices.csv', 'utf-8');
+	const csv = fs.readFileSync(config.paths.tektelicDeleteDevicesCsv, 'utf-8');
 	const lines = csv.trim().split('\n');
 	const header = lines[0].split(',');
 

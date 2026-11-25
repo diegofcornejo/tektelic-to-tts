@@ -3,3 +3,7 @@ node_modules
 .DS_Store
 *.csv
 *.xlsx
+
+# Local input/output data (may contain device keys)
+data/*
+!data/.gitkeep

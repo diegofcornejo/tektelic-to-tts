@@ -51,6 +51,7 @@ Create a `.env` file in the project root with the following variables:
 
 - `TEKTELIC_BASE_URL`: Base URL of the Tektelic API (e.g., `https://api.tektelic.com`)
 - `TEKTELIC_BEARER_TOKEN`: Bearer authentication token for the Tektelic API
+- `TEKTELIC_CUSTOMER_ID`: Customer ID in Tektelic (must match the `customerId` of the bearer token), used to list all customer devices
 - `TEKTELIC_APP_ID`: Application ID in Tektelic from which devices will be migrated
 
 ### The Things Stack (TTS) Variables
@@ -66,6 +67,7 @@ Create a `.env` file in the project root with the following variables:
 # Tektelic Configuration
 TEKTELIC_BASE_URL=https://api.tektelic.com
 TEKTELIC_BEARER_TOKEN=your_tektelic_token
+TEKTELIC_CUSTOMER_ID=your_tektelic_customer_id
 TEKTELIC_APP_ID=your_tektelic_app_id
 
 # The Things Stack Configuration
@@ -81,7 +83,7 @@ The script supports two modes of operation for selecting devices to migrate:
 
 ### Mode 1: Migrate Specific Devices
 
-To migrate only specific devices, edit the `DEVICES_FOR_MIGRATION` array in the `index.js` file and add the Device EUIs:
+To migrate only specific devices, edit the `DEVICES_FOR_MIGRATION` array in `src/scripts/migrate.js` and add the Device EUIs:
 
 ```javascript
 // Only devices with EUIs listed here will be migrated
@@ -108,13 +110,13 @@ const DEVICES_FOR_MIGRATION = [];
 Once environment variables and devices to migrate are configured, run:
 
 ```bash
-node index.js
+npm run migrate
 ```
 
 Or if you use Bun:
 
 ```bash
-bun index.js
+bun run migrate
 ```
 
 ## Migration Process
@@ -159,7 +161,7 @@ The project uses `pino` for logging with a readable format. Logs include:
 
 - **Device Selection**: You can migrate specific devices by listing their EUIs in `DEVICES_FOR_MIGRATION`, or migrate all devices by leaving the array empty
 - **Device Names**: Device names are automatically converted to lowercase in TTS
-- **Frequency Plan**: The script is configured for the AU_915_928_FSB_1 region. If you need another region, modify `FREQUENCY_PLAN_ID` in `tts.js`
+- **Frequency Plan**: The script is configured for the AU_915_928_FSB_1 region. If you need another region, modify `FREQUENCY_PLAN_ID` in `src/clients/tts.js`
 - **ABP Requirement**: Ensure devices in Tektelic are configured with ABP (Activation By Personalization) before migrating them
 - **Read-Only on Tektelic**: The script does not delete or modify devices in Tektelic, it only creates them in TTS
 - **Validation**: All devices are validated before migration. Devices missing required ABP fields will be skipped
@@ -169,13 +171,33 @@ The project uses `pino` for logging with a readable format. Logs include:
 
 ```
 .
-├── index.js          # Main entry point
-├── tektelic.js      # Tektelic API client
-├── tts.js           # The Things Stack API client
-├── logger.js        # Logging configuration
-├── package.json     # Project dependencies
-└── README.md        # This documentation
+├── src/
+│   ├── config.js                        # Loads .env and exposes settings and data file paths
+│   ├── clients/
+│   │   ├── tektelic.js                  # Tektelic API client
+│   │   └── tts.js                       # The Things Stack API client
+│   ├── lib/
+│   │   ├── csv.js                       # CSV read/write helpers
+│   │   └── logger.js                    # Logging configuration
+│   └── scripts/                         # One entry point per task (see npm scripts)
+│       ├── migrate.js                   # npm run migrate
+│       ├── list-tektelic-devices.js     # npm run devices:list
+│       ├── compare-devices.js           # npm run devices:compare
+│       ├── delete-tektelic-devices.js   # npm run devices:delete
+│       └── inspect-tektelic-device.js   # npm run devices:inspect
+├── data/                                # Local CSV inputs/outputs (git-ignored, may contain keys)
+├── docs/diagrams/                       # Migration flow diagram
+├── package.json
+└── README.md
 ```
+
+| npm script | What it does | Touches |
+|---|---|---|
+| `npm run migrate` | Migrates devices from the Tektelic application to TTS | Reads Tektelic, **writes TTS** |
+| `npm run devices:list` | Exports all customer devices to `data/tektelic_devices.csv` | Reads Tektelic |
+| `npm run devices:compare` | Compares Tektelic vs Gridia CSVs into `data/devices_comparison.csv` | Local files only |
+| `npm run devices:delete` | Deletes the devices listed in `data/tektelic_delete_devices.csv` | **Deletes in Tektelic** |
+| `npm run devices:inspect` | Prints the raw payload of the first device of the Tektelic application | Reads Tektelic |
 
 ## Dependencies
 
@@ -205,7 +227,7 @@ To generate a comparison report between Tektelic and Gridia devices, you need tw
 
 ### 1. Generate `gridia_devices.csv`
 
-Run the following query against the Gridia database and export the result as `gridia_devices.csv` in the project root:
+Run the following query against the Gridia database and export the result as `data/gridia_devices.csv`:
 
 ```sql
 select
@@ -224,16 +246,16 @@ join organization o on p.organizationId = o.id;
 Run the following script to fetch all devices from the Tektelic API:
 
 ```bash
-node tektelic_devices.js
+npm run devices:list
 ```
 
 ### 3. Run the comparison
 
 ```bash
-node compare_devices.js
+npm run devices:compare
 ```
 
-This generates `devices_comparison.csv` with the following columns:
+This generates `data/devices_comparison.csv` with the following columns:
 
 | Column | Source |
 |---|---|
@@ -248,11 +270,11 @@ Devices that only exist in one platform will have the other platform's columns e
 
 ## Delete Tektelic Devices
 
-To bulk-delete devices from the Tektelic platform, use the `delete_devices.js` script.
+To bulk-delete devices from the Tektelic platform, use the `src/scripts/delete-tektelic-devices.js` script.
 
 ### Input
 
-The script reads `tektelic_delete_devices.csv` from the project root. The required column is:
+The script reads `data/tektelic_delete_devices.csv`. The required column is:
 
 | Column | Description |
 |---|---|
@@ -268,7 +290,7 @@ d82efa50-ae1f-11ed-9dc8-6f708dbf6c1a,1595252,42594C0B01595252
 ### Run
 
 ```bash
-node delete_devices.js
+npm run devices:delete
 ```
 
 The script logs progress every 50 devices and a final summary with deleted/failed counts.

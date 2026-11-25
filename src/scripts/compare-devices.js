@@ -1,25 +1,10 @@
-require('dotenv').config();
-const fs = require('fs');
-const logger = require('./lib/logger');
-
-const parseCsv = (filePath) => {
-	const content = fs.readFileSync(filePath, 'utf-8');
-	const [headerLine, ...lines] = content.trim().split('\n');
-	const headers = headerLine.split(',').map(h => h.replace(/"/g, '').trim());
-
-	return lines.map(line => {
-		const values = line.match(/(".*?"|[^,]+)/g) || [];
-		const obj = {};
-		headers.forEach((h, i) => {
-			obj[h] = (values[i] || '').replace(/"/g, '').trim();
-		});
-		return obj;
-	});
-};
+const config = require('../config');
+const logger = require('../lib/logger');
+const { parseCsv, writeCsv } = require('../lib/csv');
 
 const main = () => {
-	const tektelicDevices = parseCsv('tektelic_devices.csv');
-	const gridiaDevices = parseCsv('gridia_devices.csv');
+	const tektelicDevices = parseCsv(config.paths.tektelicDevicesCsv);
+	const gridiaDevices = parseCsv(config.paths.gridiaDevicesCsv);
 
 	logger.info(`Tektelic devices: ${tektelicDevices.length}`);
 	logger.info(`Gridia devices: ${gridiaDevices.length}`);
@@ -64,13 +49,15 @@ const main = () => {
 		}
 	}
 
-	const header = 'tektelicDevId,tektelicDevName,tektelicDevEUI,gridiaDevId,gridiaDevEUI,gridiaProject,gridiaOrganization';
-	const rows = report.map(r =>
-		`${r.tektelicDevId},${r.tektelicDevName},${r.tektelicDevEUI},${r.gridiaDevId},${r.gridiaDevEUI},${r.gridiaProject},${r.gridiaOrganization}`
-	);
-	const csv = [header, ...rows].join('\n');
-
-	fs.writeFileSync('devices_comparison.csv', csv);
+	writeCsv(config.paths.devicesComparisonCsv, [
+		'tektelicDevId',
+		'tektelicDevName',
+		'tektelicDevEUI',
+		'gridiaDevId',
+		'gridiaDevEUI',
+		'gridiaProject',
+		'gridiaOrganization',
+	], report);
 
 	const onlyTektelic = report.filter(r => r.tektelicDevEUI && !r.gridiaDevEUI);
 	const onlyGridia = report.filter(r => !r.tektelicDevEUI && r.gridiaDevEUI);
@@ -79,7 +66,7 @@ const main = () => {
 	logger.info(`Matched: ${matched.length}`);
 	logger.info(`Only in Tektelic: ${onlyTektelic.length}`);
 	logger.info(`Only in Gridia: ${onlyGridia.length}`);
-	logger.info(`Report saved to devices_comparison.csv`);
+	logger.info(`Report saved to ${config.paths.devicesComparisonCsv}`);
 };
 
 main();

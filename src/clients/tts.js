@@ -1,12 +1,13 @@
 const axios = require('axios');
-const logger = require('./logger');
+const config = require('../config');
+const logger = require('../lib/logger');
 
 const {
-	TTS_HOST,
-	TTS_BASE_URL,
-	TTS_BEARER_TOKEN,
-	TTS_APP_ID,
-} = process.env;
+	host: TTS_HOST,
+	baseUrl: TTS_BASE_URL,
+	bearerToken: TTS_BEARER_TOKEN,
+	appId: TTS_APP_ID,
+} = config.tts;
 
 const api = axios.create({
 	baseURL: TTS_BASE_URL,

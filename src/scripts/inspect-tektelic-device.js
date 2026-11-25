@@ -1,10 +1,9 @@
-require('dotenv').config();
+// Prints the first device of the Tektelic application, to inspect the raw API payload
+const config = require('../config');
 const logger = require('../lib/logger');
-const { getApplicationDevices } = require('../lib/tektelic');
+const { getApplicationDevices } = require('../clients/tektelic');
 
-const {
-	TEKTELIC_APP_ID,
-} = process.env;
+const TEKTELIC_APP_ID = config.tektelic.appId;
 
 const main = async () => {
 	const devices = await getApplicationDevices(TEKTELIC_APP_ID);

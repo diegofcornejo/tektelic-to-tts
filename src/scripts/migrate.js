@@ -1,12 +1,9 @@
-require('dotenv').config();
-const logger = require('./lib/logger');
-const { getApplicationDevices } = require('./lib/tektelic');
-const { provisionAbpDevice } = require('./lib/tts');
+const config = require('../config');
+const logger = require('../lib/logger');
+const { getApplicationDevices } = require('../clients/tektelic');
+const { provisionAbpDevice } = require('../clients/tts');
 
-const {
-	TEKTELIC_APP_ID,
-} = process.env;
-
+const TEKTELIC_APP_ID = config.tektelic.appId;
 
 
 // If empty, all devices from Tektelic will be migrated
