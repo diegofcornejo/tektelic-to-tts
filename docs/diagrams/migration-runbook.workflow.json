@@ -1,0 +1,322 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Tektelic → The Things Stack Migration Runbook (ABP)",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "output": "docs/diagrams/migration-runbook.html",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "npm script step"
+        },
+        "security": {
+          "label": "Gate / stop / failure"
+        },
+        "database": {
+          "label": "Data file (data/)"
+        },
+        "cloud": {
+          "label": "Remote API"
+        },
+        "external": {
+          "label": "Manual step"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "operator",
+      "label": "Operator (manual)"
+    },
+    {
+      "id": "scripts",
+      "label": "npm scripts (src/scripts)"
+    },
+    {
+      "id": "tektelic",
+      "label": "Tektelic API"
+    },
+    {
+      "id": "tts",
+      "label": "The Things Stack"
+    },
+    {
+      "id": "stops",
+      "label": "Stopped / errors",
+      "variant": "exception"
+    }
+  ],
+  "phases": [
+    {
+      "id": "inventory",
+      "label": "1 · Inventory",
+      "fromCol": 0,
+      "toCol": 1
+    },
+    {
+      "id": "migration",
+      "label": "2 · Migration (npm run migrate)",
+      "fromCol": 2,
+      "toCol": 4,
+      "variant": "emphasis"
+    },
+    {
+      "id": "cleanup",
+      "label": "3 · Cleanup",
+      "fromCol": 5,
+      "toCol": 5,
+      "variant": "security"
+    }
+  ],
+  "mainPath": [
+    "list",
+    "compare",
+    "pick",
+    "plan",
+    "gate",
+    "provision",
+    "deleteCsv",
+    "deleteScript",
+    "deleteApi"
+  ],
+  "nodes": [
+    {
+      "id": "list",
+      "lane": "scripts",
+      "col": 0,
+      "type": "backend",
+      "label": "devices:list",
+      "sublabel": "→ tektelic_devices.csv"
+    },
+    {
+      "id": "customerDevices",
+      "lane": "tektelic",
+      "col": 0,
+      "type": "cloud",
+      "label": "Customer devices",
+      "sublabel": "pages of 100"
+    },
+    {
+      "id": "gridiaExport",
+      "lane": "operator",
+      "col": 1,
+      "type": "database",
+      "label": "Gridia SQL export",
+      "sublabel": "gridia_devices.csv"
+    },
+    {
+      "id": "compare",
+      "lane": "scripts",
+      "col": 1,
+      "type": "backend",
+      "label": "devices:compare",
+      "sublabel": "→ devices_comparison.csv"
+    },
+    {
+      "id": "pick",
+      "lane": "operator",
+      "col": 2,
+      "type": "external",
+      "label": "Pick EUIs",
+      "sublabel": "DEVICES_FOR_MIGRATION",
+      "tag": "[] = all"
+    },
+    {
+      "id": "plan",
+      "lane": "scripts",
+      "col": 2,
+      "type": "backend",
+      "label": "Build plan",
+      "sublabel": "select + validate",
+      "tag": "7 required fields",
+      "explanation": "buildMigrationPlan selects the listed EUIs (or every device), sorts them into ready, skipped (missing ABP fields) and not found. Nothing is sent to TTS at this point."
+    },
+    {
+      "id": "appDevices",
+      "lane": "tektelic",
+      "col": 2,
+      "type": "cloud",
+      "label": "App devices",
+      "sublabel": "all pages",
+      "tag": "TEKTELIC_APP_ID"
+    },
+    {
+      "id": "gate",
+      "lane": "scripts",
+      "col": 3,
+      "type": "security",
+      "label": "Summary + confirm",
+      "sublabel": "ready · skipped · not found",
+      "tag": "[y/N] default No",
+      "explanation": "Prints source app, target TTS app, LoRaWAN profile and the ready / skipped / not-found lists, then asks the operator. Only y or yes continues."
+    },
+    {
+      "id": "stopped",
+      "lane": "stops",
+      "col": 3,
+      "type": "security",
+      "label": "Stopped",
+      "sublabel": "no changes made"
+    },
+    {
+      "id": "provision",
+      "lane": "tts",
+      "col": 4,
+      "type": "cloud",
+      "label": "provisionAbpDevice",
+      "sublabel": "IS → NS → AS",
+      "tag": "sequential"
+    },
+    {
+      "id": "failed",
+      "lane": "stops",
+      "col": 4,
+      "type": "security",
+      "label": "Provisioning failed",
+      "sublabel": "counted, next device"
+    },
+    {
+      "id": "deleteCsv",
+      "lane": "operator",
+      "col": 5,
+      "type": "external",
+      "label": "Build delete CSV",
+      "sublabel": "tektelic_delete_devices.csv"
+    },
+    {
+      "id": "deleteScript",
+      "lane": "scripts",
+      "col": 5,
+      "type": "backend",
+      "label": "devices:delete",
+      "sublabel": "bulk delete"
+    },
+    {
+      "id": "deleteApi",
+      "lane": "tektelic",
+      "col": 5,
+      "type": "cloud",
+      "label": "Delete device",
+      "sublabel": "DELETE /api/device/{id}"
+    }
+  ],
+  "edges": [
+    {
+      "id": "list-fetch",
+      "from": "list",
+      "to": "customerDevices",
+      "label": "paginated GET",
+      "variant": "default",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "list-compare",
+      "from": "list",
+      "to": "compare",
+      "label": "CSV",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gridia-compare",
+      "from": "gridiaExport",
+      "to": "compare",
+      "label": "CSV",
+      "variant": "default",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "compare-pick",
+      "from": "compare",
+      "to": "pick",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "pick-plan",
+      "from": "pick",
+      "to": "plan",
+      "variant": "emphasis"
+    },
+    {
+      "id": "plan-fetch",
+      "from": "plan",
+      "to": "appDevices",
+      "label": "paginated GET",
+      "variant": "default"
+    },
+    {
+      "id": "plan-gate",
+      "from": "plan",
+      "to": "gate",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gate-provision",
+      "from": "gate",
+      "to": "provision",
+      "label": "y / yes",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gate-stop",
+      "from": "gate",
+      "to": "stopped",
+      "label": "0 ready or ≠ y",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "id": "provision-fail",
+      "from": "provision",
+      "to": "failed",
+      "label": "API error",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "id": "provision-verified",
+      "from": "provision",
+      "to": "deleteCsv",
+      "label": "verified",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "id": "csv-delete",
+      "from": "deleteCsv",
+      "to": "deleteScript",
+      "variant": "emphasis"
+    },
+    {
+      "id": "delete-api",
+      "from": "deleteScript",
+      "to": "deleteApi",
+      "label": "by UUID",
+      "variant": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "Safety",
+      "items": [
+        "Nothing is written to TTS before the operator answers y / yes",
+        "devices:delete is irreversible; run it only after verifying in TTS"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Data files",
+      "items": [
+        "All CSV inputs and outputs live in data/ (git-ignored, may hold keys)"
+      ]
+    }
+  ]
+}

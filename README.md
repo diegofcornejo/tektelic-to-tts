@@ -16,8 +16,8 @@ The script automates the migration of LoRaWAN devices from Tektelic to TTS, perf
 ## Migration Flow
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/migration-runbook-dark.png" />
-  <img src="docs/diagrams/migration-runbook-light.png" alt="Migration runbook: inventory, migration via index.js (IS → NS → AS) and Tektelic cleanup" />
+  <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/migration-runbook-dark.svg" />
+  <img src="docs/diagrams/migration-runbook-light.svg" alt="Migration runbook: inventory (devices:list, devices:compare), migration via npm run migrate (build plan, summary + y/N confirmation, IS → NS → AS) and Tektelic cleanup (devices:delete)" />
 </picture>
 
 ## Prerequisites
@@ -195,7 +195,7 @@ The project uses `pino` for logging with a readable format. Logs include:
 │       ├── delete-tektelic-devices.js   # npm run devices:delete
 │       └── inspect-tektelic-device.js   # npm run devices:inspect
 ├── data/                                # Local CSV inputs/outputs (git-ignored, may contain keys)
-├── docs/diagrams/                       # Migration flow diagram
+├── docs/diagrams/                       # Migration flow diagram (SVG + Archify source JSON)
 ├── package.json
 └── README.md
 ```

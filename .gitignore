@@ -7,3 +7,6 @@ node_modules
 # Local input/output data (may contain device keys)
 data/*
 !data/.gitkeep
+
+# Archify working folders (diagram drafts and receipts)
+.archify/
