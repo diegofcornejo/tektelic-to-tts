@@ -7,9 +7,9 @@ const TEKTELIC_APP_ID = config.tektelic.appId;
 
 const main = async () => {
 	const devices = await getApplicationDevices(TEKTELIC_APP_ID);
-	if (devices?.totalElements > 0) {
-		logger.info(`Found ${devices.totalElements} devices for application ${TEKTELIC_APP_ID}`);
-		logger.info(JSON.stringify(devices.data[0], null, 2));
+	if (devices.length > 0) {
+		logger.info(`Found ${devices.length} devices for application ${TEKTELIC_APP_ID}`);
+		logger.info(JSON.stringify(devices[0], null, 2));
 	} else {
 		logger.warn(`No devices found for application ${TEKTELIC_APP_ID}`);
 		return;

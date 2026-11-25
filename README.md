@@ -119,11 +119,19 @@ Or if you use Bun:
 bun run migrate
 ```
 
+Before touching TTS, the script prints a **migration summary** and asks for confirmation:
+
+- Source Tektelic application and how many devices it has
+- Target TTS instance, application and LoRaWAN settings (version, PHY, frequency plan)
+- How many devices will be migrated, skipped (missing fields) or were not found (EUIs listed in `DEVICES_FOR_MIGRATION` that are not in the Tektelic application), with a preview of each list
+
+Only `y` or `yes` starts the migration. Any other answer (or no interactive input) cancels it without making changes. When it finishes, it logs how many devices were migrated and how many failed.
+
 ## Migration Process
 
 The script performs the following steps:
 
-1. **Device retrieval**: Queries the Tektelic API to get all devices from the specified application
+1. **Device retrieval**: Queries the Tektelic API to get all devices from the specified application (all pages)
 2. **Device selection**: 
    - If `DEVICES_FOR_MIGRATION` is empty: selects all devices from Tektelic
    - If `DEVICES_FOR_MIGRATION` has entries: selects only devices matching the listed EUIs
@@ -134,7 +142,8 @@ The script performs the following steps:
    - `appSKey`: Application session key
    - `nwkSKey`: Network session key
    - Devices missing any required fields are skipped with a warning log
-4. **Migration to TTS**: For each valid device, performs the following operations in order:
+4. **Summary and confirmation**: Prints what will be migrated, skipped or not found, and waits for `y`/`yes`
+5. **Migration to TTS**: For each valid device, performs the following operations in order:
    - Creates the device in the Identity Server (IS)
    - Configures the device in the Network Server (NS) with:
      - LoRaWAN version: 1.0.2
@@ -161,7 +170,7 @@ The project uses `pino` for logging with a readable format. Logs include:
 
 - **Device Selection**: You can migrate specific devices by listing their EUIs in `DEVICES_FOR_MIGRATION`, or migrate all devices by leaving the array empty
 - **Device Names**: Device names are automatically converted to lowercase in TTS
-- **Frequency Plan**: The script is configured for the AU_915_928_FSB_1 region. If you need another region, modify `FREQUENCY_PLAN_ID` in `src/clients/tts.js`
+- **Frequency Plan**: The script is configured for the AU_915_928_FSB_1 region. If you need another region, modify `DEVICE_PROFILE.frequencyPlanId` in `src/clients/tts.js`
 - **ABP Requirement**: Ensure devices in Tektelic are configured with ABP (Activation By Personalization) before migrating them
 - **Read-Only on Tektelic**: The script does not delete or modify devices in Tektelic, it only creates them in TTS
 - **Validation**: All devices are validated before migration. Devices missing required ABP fields will be skipped

@@ -10,38 +10,42 @@ const api = axios.create({
 	},
 });
 
-const getCustomerDevices = async (customerId, { limit = 100, sortField = 'NAME', sortDirection = 'ASC' } = {}) => {
-	try {
-		const allDevices = [];
-		let page = 0;
-		let hasMore = true;
+// Fetches every page of a paginated Tektelic device listing
+const getAllPages = async (url, label, { limit = 100, sortField = 'NAME', sortDirection = 'ASC' } = {}) => {
+	const allDevices = [];
+	let page = 0;
+	let hasMore = true;
 
-		while (hasMore) {
-			logger.info(`Fetching devices for customer ${customerId}, page ${page}`);
-			const { data } = await api.get(`/api/customer/${customerId}/devices`, {
-				params: { page, limit, sortField, sortDirection },
-			});
+	while (hasMore) {
+		logger.info(`Fetching devices for ${label}, page ${page}`);
+		const { data } = await api.get(url, {
+			params: { page, limit, sortField, sortDirection },
+		});
 
-			if (data?.data?.length) {
-				allDevices.push(...data.data);
-			}
-
-			const totalPages = Math.ceil((data?.totalElements || 0) / limit);
-			page++;
-			hasMore = page < totalPages;
+		if (data?.data?.length) {
+			allDevices.push(...data.data);
 		}
 
-		return allDevices;
+		const totalPages = Math.ceil((data?.totalElements || 0) / limit);
+		page++;
+		hasMore = page < totalPages;
+	}
+
+	return allDevices;
+};
+
+const getCustomerDevices = async (customerId, options) => {
+	try {
+		return await getAllPages(`/api/customer/${customerId}/devices`, `customer ${customerId}`, options);
 	} catch (error) {
 		logger.error(`Error fetching devices by customer ID: ${error.message}`);
 		return [];
 	}
 };
 
-const getApplicationDevices = async (applicationId) => {
+const getApplicationDevices = async (applicationId, options) => {
 	try {
-		const { data } = await api.get(`/api/application/${applicationId}/devices`);
-		return data;
+		return await getAllPages(`/api/application/${applicationId}/devices`, `application ${applicationId}`, options);
 	} catch (error) {
 		logger.error(`Error fetching devices by app ID: ${error.message}`);
 		return [];

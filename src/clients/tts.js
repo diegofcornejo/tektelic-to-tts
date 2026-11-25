@@ -9,6 +9,14 @@ const {
 	appId: TTS_APP_ID,
 } = config.tts;
 
+// LoRaWAN settings applied to every device on the Network Server
+// TODO: Get these values from the environment variables or check if is needed to be dynamic along with the deviceData
+const DEVICE_PROFILE = {
+	lorawanVersion: '1.0.2',
+	lorawanPhyVersion: '1.0.2-b',
+	frequencyPlanId: 'AU_915_928_FSB_1',
+};
+
 const api = axios.create({
 	baseURL: TTS_BASE_URL,
 	headers: {
@@ -76,11 +84,6 @@ const createDeviceOnIS = async (deviceData) => {
 };
 
 const setDeviceOnNS = async (deviceData) => {
-	// TODO: Get these values from the environment variables or check if is needed to be dynamic along with the deviceData
-	const LORAWAN_VERSION = '1.0.2';
-	const LORAWAN_PHY_VERSION = '1.0.2-b';
-	const FREQUENCY_PLAN_ID = 'AU_915_928_FSB_1';
-
 	const body = {
 		end_device: {
 			ids: {
@@ -90,9 +93,9 @@ const setDeviceOnNS = async (deviceData) => {
 				},
 				dev_eui: deviceData.deviceEUI,
 			},
-			lorawan_version: LORAWAN_VERSION,
-			lorawan_phy_version: LORAWAN_PHY_VERSION,
-			frequency_plan_id: FREQUENCY_PLAN_ID,
+			lorawan_version: DEVICE_PROFILE.lorawanVersion,
+			lorawan_phy_version: DEVICE_PROFILE.lorawanPhyVersion,
+			frequency_plan_id: DEVICE_PROFILE.frequencyPlanId,
 			mac_settings: {
 				supports_32_bit_f_cnt: true,
 			},
@@ -184,11 +187,14 @@ const provisionAbpDevice = async (deviceData) => {
 		await setDeviceOnNS(deviceData);
 		await setDeviceOnAS(deviceData);
 		logger.info(`ABP device ${deviceData.deviceName} provisioned successfully`);
+		return true;
 	} catch (err) {
 		logger.error(`Failed to provision device ${deviceData.deviceName}`);
+		return false;
 	}
 };
 
 module.exports = {
+	DEVICE_PROFILE,
 	provisionAbpDevice,
 };
