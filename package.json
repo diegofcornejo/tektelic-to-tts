@@ -9,6 +9,7 @@
   "scripts": {
     "migrate": "node src/scripts/migrate.js",
     "devices:list": "node src/scripts/list-tektelic-devices.js",
+    "devices:find": "node src/scripts/find-devices.js",
     "devices:compare": "node src/scripts/compare-devices.js",
     "devices:delete": "node src/scripts/delete-tektelic-devices.js",
     "devices:inspect": "node src/scripts/inspect-tektelic-device.js",

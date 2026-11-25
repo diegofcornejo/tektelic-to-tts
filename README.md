@@ -191,6 +191,7 @@ The project uses `pino` for logging with a readable format. Logs include:
 │   └── scripts/                         # One entry point per task (see npm scripts)
 │       ├── migrate.js                   # npm run migrate
 │       ├── list-tektelic-devices.js     # npm run devices:list
+│       ├── find-devices.js              # npm run devices:find
 │       ├── compare-devices.js           # npm run devices:compare
 │       ├── delete-tektelic-devices.js   # npm run devices:delete
 │       └── inspect-tektelic-device.js   # npm run devices:inspect
@@ -204,6 +205,7 @@ The project uses `pino` for logging with a readable format. Logs include:
 |---|---|---|
 | `npm run migrate` | Migrates devices from the Tektelic application to TTS | Reads Tektelic, **writes TTS** |
 | `npm run devices:list` | Exports all customer devices to `data/tektelic_devices.csv` | Reads Tektelic |
+| `npm run devices:find` | Searches devices by application, name, model, vendor and state (see [Find Devices](#find-devices)) | Reads Tektelic |
 | `npm run devices:compare` | Compares Tektelic vs Gridia CSVs into `data/devices_comparison.csv` | Local files only |
 | `npm run devices:delete` | Deletes the devices listed in `data/tektelic_delete_devices.csv` | **Deletes in Tektelic** |
 | `npm run devices:inspect` | Prints the raw payload of the first device of the Tektelic application | Reads Tektelic |
@@ -229,6 +231,115 @@ The project uses `pino` for logging with a readable format. Logs include:
 ### TTS authentication error
 - Verify that `TTS_BEARER_TOKEN` is valid and has write permissions
 - Confirm that `TTS_APP_ID` exists in your TTS instance
+
+## Find Devices
+
+`npm run devices:find` searches Tektelic devices and exports the matches with all their fields. It is **read-only**: it never writes to Tektelic or TTS.
+
+Each device is enriched with its model's `manufacturer` (vendor) and `modelType`, looked up from the customer's device models. All text filters ignore case, because vendor and model names are not consistent in Tektelic (for example `Baylan` / `BAYLAN`).
+
+### Options
+
+| Option | Meaning |
+|---|---|
+| `--app <id\|name>` | Search only this application (ID or exact name). Without it, all devices of `TEKTELIC_CUSTOMER_ID` are searched |
+| `--name <pattern>` | Device name. With `*` it is a wildcard matched against the whole name (`BAYLAN-ST*`); without `*` it matches if the name contains the text (`st20`) |
+| `--model <model>` | Exact model name (`ST`, `"Baylan ST"`) |
+| `--vendor <vendor>` | Exact manufacturer (`baylan`) |
+| `--match <all\|any>` | How **different** filters combine: `all` = AND (default), `any` = OR |
+| `--active` / `--inactive` | Keep only active / inactive devices. Always applied as AND, regardless of `--match` |
+| `--out <name>` | Output base name: `data/<name>.csv` and `data/<name>.json` (default `devices_find_<timestamp>`) |
+| `--with-keys` | Include `appKey`, `appSKey` and `nwkSKey` (omitted by default) |
+| `--help` | Show the built-in help |
+
+`--name`, `--model` and `--vendor` can be repeated; repeated values of the same flag are OR-ed (`--model ST --model "Baylan ST"` means ST or Baylan ST).
+
+Note the `--` after the script name: npm needs it to pass the options to the script.
+
+### Examples
+
+All devices of the customer (no filters):
+
+```bash
+npm run devices:find
+```
+
+All devices of one application, by name or ID (an unknown application prints the available ones):
+
+```bash
+npm run devices:find -- --app "My Application"
+npm run devices:find -- --app <application-id>
+```
+
+Name starting with a prefix (wildcard):
+
+```bash
+npm run devices:find -- --name "BAYLAN-ST*"
+```
+
+Name containing a text:
+
+```bash
+npm run devices:find -- --name st20
+```
+
+One or several models:
+
+```bash
+npm run devices:find -- --model ST
+npm run devices:find -- --model ST --model "Baylan ST"
+```
+
+One vendor (matches `Baylan` and `BAYLAN`):
+
+```bash
+npm run devices:find -- --vendor baylan
+```
+
+Only active or only inactive devices:
+
+```bash
+npm run devices:find -- --vendor baylan --active
+npm run devices:find -- --app "My Application" --inactive
+```
+
+Several filters that must **all** match (AND, the default): AK411P / AK-411PE models from Baylan that are inactive:
+
+```bash
+npm run devices:find -- --model AK411P --model AK-411PE --vendor baylan --inactive
+```
+
+Several filters where **any** may match (OR): name starts with `BAYLAN-ST` or model is `ST` / `Baylan ST`:
+
+```bash
+npm run devices:find -- --name "BAYLAN-ST*" --model ST --model "Baylan ST" --match any --out baylan_st_devices
+```
+
+Scope, filters and state combined: active Baylan devices of one application:
+
+```bash
+npm run devices:find -- --app "My Application" --vendor baylan --active
+```
+
+Full export including device keys, with a fixed file name:
+
+```bash
+npm run devices:find -- --with-keys --out all_devices_with_keys
+```
+
+### Output
+
+The console shows the scope, the applied filters, the number of matches, counts by vendor/model, application and state, and a table with the first 50 devices.
+
+The files in `data/` contain one row per device with every field returned by Tektelic (nested IDs flattened to their UUID), plus:
+
+| Column | Content |
+|---|---|
+| `manufacturer`, `modelType` | Vendor and type of the device model |
+| `createdTimeISO`, `lastActivityTimeISO` | Timestamps in ISO 8601, UTC (empty when the device never sent data) |
+| `match_name`, `match_model`, `match_vendor` | Which filter each device matched (only for the filters used); useful with `--match any` |
+
+`data/` is git-ignored. Files created with `--with-keys` contain device keys: do not share them.
 
 ## Device Comparison
 

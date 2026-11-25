@@ -62,6 +62,17 @@ const getCustomerApplications = async () => {
 	}
 };
 
+// Device models carry the manufacturer and type that devices only reference by ID
+const getCustomerDeviceModels = async () => {
+	try {
+		const { data } = await api.get(`/api/customer/deviceModels`);
+		return data;
+	} catch (error) {
+		logger.error(`Error fetching device models: ${error.message}`);
+		return [];
+	}
+};
+
 const deleteDevice = async (deviceId) => {
 	logger.info(`Deleting device ${deviceId}`);
 	try {
@@ -77,5 +88,6 @@ module.exports = {
 	getCustomerDevices,
 	getApplicationDevices,
 	getCustomerApplications,
+	getCustomerDeviceModels,
 	deleteDevice,
 };

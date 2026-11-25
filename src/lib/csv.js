@@ -16,10 +16,18 @@ const parseCsv = (filePath) => {
 	});
 };
 
-// Writes records as CSV using the given columns (values are not escaped)
-const writeCsv = (filePath, columns, records) => {
-	const header = columns.join(',');
-	const rows = records.map(r => columns.map(c => r[c]).join(','));
+// Quotes a value when it contains a comma, quote or line break (RFC 4180)
+const escapeValue = (value) => {
+	const text = value === null || value === undefined ? '' : String(value);
+	return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+};
+
+// Writes records as CSV using the given columns.
+// Values are written as-is unless `escape` is set, which quotes them when needed.
+const writeCsv = (filePath, columns, records, { escape = false } = {}) => {
+	const format = escape ? escapeValue : (value) => value;
+	const header = columns.map(format).join(',');
+	const rows = records.map(r => columns.map(c => format(r[c])).join(','));
 	fs.writeFileSync(filePath, [header, ...rows].join('\n'));
 };
 
